@@ -1,0 +1,20 @@
+import './globals.css';
+import React from 'react';
+import I18nProvider from '../components/providers/I18nProvider';
+import ThemeProvider from '../components/providers/ThemeProvider';
+
+export const metadata = { title: 'CryptoBali' };
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ru">
+      <body>
+        <I18nProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </I18nProvider>
+      </body>
+    </html>
+  );
+}

@@ -1,0 +1,40 @@
+{
+  "name": "cryptobali-ocean",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "NEXT_PUBLIC_TG_MOCK=1 next dev -p 3010",
+    "build": "next build",
+    "start": "next start -p 3010",
+    "lint": "next lint",
+    "new:page": "node scripts/scaffold.mjs page",
+    "new:api": "node scripts/scaffold.mjs api"
+  },
+  "dependencies": {
+    "@ton/core": "0.61.0",
+    "@ton/crypto": "latest",
+    "@tonconnect/ui-react": "2.3.0",
+    "clsx": "^2.1.1",
+    "html5-qrcode": "^2.3.8",
+    "next": "^15.5.2",
+    "qrcode": "^1.5.3",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.2.56",
+    "@types/react-dom": "^18.2.23",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.5",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": "20.x"
+  },
+  "overrides": {
+    "@ton/core": "0.61.0",
+    "@ton/crypto": "latest"
+  }
+}
