@@ -5,6 +5,8 @@ import React from 'react';
 import TabBar from '../components/ui/TabBar';
 import { Web3Provider } from '../components/providers/Web3';
 
+import TgInit from '../components/providers/TgInit';
+
 export const metadata = {
   title: 'CryptoBali — Профиль',
   description: 'Mini-app',
@@ -14,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+      <TgInit />
         <Web3Provider>
         <Providers>
           {children}
