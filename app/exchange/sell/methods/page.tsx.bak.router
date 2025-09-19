@@ -1,0 +1,95 @@
+'use client';
+import React from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+
+type Curr = 'RUB' | 'USD' | 'IDR' | 'USDT';
+const RATE: Record<Curr, number> = { RUB:100, USD:1, IDR:16000, USDT:1 };
+
+export default function SellMethods(){
+  const sp = useSearchParams();
+  const router = useRouter();
+
+  const tab = (sp.get('tab') as Curr) || 'RUB'; // куда хотим вывести
+  const usdt = Number(sp.get('usdt') || '0');
+  const out  = tab === 'USDT' ? usdt : (usdt * (RATE[tab] || 1));
+
+  function buildMethods(t: Curr){
+    if (t === 'RUB') return [
+      { key:'IDR',  title:'IDR',  subtitle:'Вывод в IDR',       mark:'Rp' },
+      { key:'USDT', title:'USDT', subtitle:'Вывод USDT (1:1)',  mark:'T'  },
+      { key:'USD',  title:'USD',  subtitle:'Вывод в USD',       mark:'$'  },
+    ];
+    if (t === 'USD') return [
+      { key:'RUB',  title:'RUB',  subtitle:'Вывод в RUB',       mark:'₽'  },
+      { key:'IDR',  title:'IDR',  subtitle:'Вывод в IDR',       mark:'Rp' },
+      { key:'USDT', title:'USDT', subtitle:'Вывод USDT (1:1)',  mark:'T'  },
+    ];
+    if (t === 'IDR') return [
+      { key:'RUB',  title:'RUB',      subtitle:'Вывод в RUB',     mark:'₽'  },
+      { key:'USDT', title:'USDT',     subtitle:'Вывод USDT',      mark:'T'  },
+      { key:'USD',  title:'USD',      subtitle:'Вывод в USD',     mark:'$'  },
+      { key:'CASH', title:'Наличные', subtitle:'Вывод наличными', mark:'Rp' },
+    ];
+    // USDT
+    return [
+      { key:'RUB',  title:'RUB',      subtitle:'Вывод в RUB',     mark:'₽'  },
+      { key:'IDR',  title:'IDR',      subtitle:'Вывод в IDR',     mark:'Rp' },
+      { key:'USD',  title:'USD',      subtitle:'Вывод в USD',     mark:'$'  },
+      { key:'CASH', title:'Наличные', subtitle:'Вывод наличными', mark:'¤' },
+    ];
+  }
+  const methods = buildMethods(tab);
+
+  const choose = (key:string)=>{
+    if (key === 'RUB') {
+      const q = new URLSearchParams({ usdt: String(usdt || 0) });
+      router.push(`/exchange/sell/rub?${q.toString()}`);
+      return;
+    }
+    if (key === 'USDT') {
+      const q = new URLSearchParams({ usdt: String(usdt || 0) });
+      router.push(`/exchange/sell/usdt?${q.toString()}`);
+      return;
+    }
+    if (key === 'USD') {
+      const q = new URLSearchParams({ usdt: String(usdt || 0) });
+      router.push(`/exchange/sell/usd?${q.toString()}`);
+      return;
+    }
+    if (key === 'CASH') {
+      const q = new URLSearchParams({ usdt: String(usdt || 0) });
+      router.push(`/exchange/sell/cash?${q.toString()}`);
+      return;
+    }
+    alert(`Демо: выбран способ вывода — ${key}`);
+  };
+
+  return (
+    <div style={{maxWidth:480, margin:'0 auto 96px', padding:'12px 16px', color:'#0b1b2b'}}>
+      <h1 style={{fontSize:18, fontWeight:900, margin:'0 0 12px'}}>Способы вывода</h1>
+
+      <div style={{background:'#fff', borderRadius:14, boxShadow:'0 1px 3px rgba(0,0,0,.08)', padding:12, marginBottom:14}}>
+        <div style={{fontWeight:800}}>Вы продаёте: {isFinite(usdt)&&usdt>0 ? usdt.toFixed(2) : '—'} USDT</div>
+        <div style={{fontSize:12, color:'#64748b', marginTop:4}}>≈ получите {isFinite(out)&&out>0 ? out.toLocaleString('ru-RU') : '—'} {tab==='USDT'?'USDT':tab}</div>
+      </div>
+
+      <div style={{background:'#fff', borderRadius:16, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,.08)', marginBottom:12}}>
+        {methods.map((m, idx)=>(
+          <React.Fragment key={m.key}>
+            <button type="button" onClick={()=>choose(m.key)} style={{width:'100%', display:'flex', alignItems:'center', gap:12, textAlign:'left', background:'transparent', border:'none', padding:'14px 16px', cursor:'pointer'}}>
+              <span style={{width:36, height:36, borderRadius:12, background:'#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, color:'#2d6cf6'}}>{m.mark}</span>
+              <span style={{display:'flex', flexDirection:'column'}}>
+                <span style={{fontWeight:900}}>{m.title}</span>
+                <span style={{fontSize:12, color:'#64748b', marginTop:2}}>{m.subtitle}</span>
+              </span>
+              <span style={{marginLeft:'auto', opacity:.8}}>›</span>
+            </button>
+            {idx < methods.length - 1 && <div style={{height:1, background:'#f1f5f9'}}/>}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <button type="button" onClick={()=>router.back()} style={{width:'100%', background:'#2d6cf6', color:'#fff', border:'none', borderRadius:14, padding:'12px 16px', fontWeight:900}}>Назад</button>
+    </div>
+  );
+}

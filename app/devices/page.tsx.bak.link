@@ -1,0 +1,65 @@
+'use client';
+import { useEffect, useMemo, useState } from 'react';
+import { upsertCurrentDevice, loadDevices, removeDevice, type DeviceInfo } from '../../lib/device';
+
+function fmtTime(ts: number){
+  const d = new Date(ts);
+  const pad = (n:number)=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export default function DevicesPage(){
+  const [list,setList]=useState<DeviceInfo[]>([]);
+
+  useEffect(()=>{
+    // зарегистрировать текущее устройство и обновить список
+    setList(upsertCurrentDevice());
+  },[]);
+
+  const refresh = ()=> setList(loadDevices());
+  const del = (id:string)=> setList(removeDevice(id));
+
+  const total = list.length;
+  const meId = useMemo(()=> (list.at(0)?.id), [list]); // просто для примера
+
+  return (
+    <div className="vstack" style={{gap:16}}>
+      <div className="topbar">
+        <Link href="/profile">← Профиль</a>
+      </div>
+
+      <div className="card" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <b>Устройства</b>
+        <div className="muted">Всего: {total}</div>
+      </div>
+
+      <div className="vstack" style={{gap:10}}>
+        {list.length===0 && <div className="card muted">Пока нет данных об устройствах.</div>}
+        {list.map((d)=>(
+          <div key={d.id} className="li">
+            <div className="left">
+              <div className="li circle">📱</div>
+              <div style={{display:'flex',flexDirection:'column'}}>
+                <b>{d.label}</b>
+                <span className="muted" style={{fontSize:12}}>
+                  {d.os} • {d.browser} • {d.platform || '—'}
+                </span>
+                <span className="muted" style={{fontSize:12}}>
+                  First: {fmtTime(d.tsFirst)} • Last: {fmtTime(d.tsLast)}
+                </span>
+              </div>
+            </div>
+            <div className="vstack" style={{gap:6, alignItems:'flex-end'}}>
+              <button className="btn" onClick={refresh}>Обновить</button>
+              <button className="btn" onClick={()=>del(d.id)} disabled={list.length<=1}>Удалить</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card muted" style={{fontSize:12}}>
+        Примечание: без бэкенда приложение видит только устройства, которые сами открывали этот интерфейс и записались в localStorage на своём браузере.
+      </div>
+    </div>
+  );
+}

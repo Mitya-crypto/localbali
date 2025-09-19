@@ -1,0 +1,46 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { read, clearKyc, progress } from '../../../lib/kyc';
+
+export default function KycStatus(){
+  const [s, setS] = useState(read());
+  const [p, setP] = useState(progress());
+  useEffect(()=>{ const onS=()=>{ setS(read()); setP(progress()); }; window.addEventListener('storage', onS); return ()=>window.removeEventListener('storage', onS); },[]);
+
+  const imgs = [
+    s.images.passport?.photo, s.images.passport?.selfie,
+    s.images.id?.front, s.images.id?.back, s.images.id?.selfie,
+    s.images.driver?.front, s.images.driver?.back, s.images.driver?.selfie
+  ].filter(Boolean) as string[];
+
+  return (
+    <div className="container" style={{ padding:16, display:'grid', gap:12 }}>
+      <Link href="/kyc" className="linkrow">← Назад</a>
+      <h1 style={{ fontSize:20, fontWeight:700 }}>Хранилище KYC (локально)</h1>
+
+      <div className="card">
+        <div className="linkrow"><div>Статус</div><div style={{color:'var(--muted)'}}>{s.status}</div></div>
+        <div className="linkrow"><div>Документ готов</div><div style={{color:'var(--muted)'}}>{p.doc ? 'да' : 'нет'}</div></div>
+        <div className="linkrow"><div>Селфи готово</div><div style={{color:'var(--muted)'}}>{p.selfie ? 'да' : 'нет'}</div></div>
+      </div>
+
+      <div className="card" style={{ display:'grid', gap:8 }}>
+        <div style={{ fontWeight:600 }}>Файлы</div>
+        {imgs.length===0 && <div style={{ color:'var(--muted)' }}>Пусто</div>}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+          {imgs.map((u,i)=>(
+            u.startsWith('data:application/pdf') ? (
+              <div key={i} className="linkrow" style={{justifyContent:'space-between'}}>PDF документ</div>
+            ) : (
+              <img key={i} src={u} alt={'doc'+i} style={{ width:'100%', height:120, objectFit:'cover', borderRadius:12 }} />
+            )
+          ))}
+        </div>
+      </div>
+
+      <button className="btn" onClick={()=>{ if(confirm('Очистить все локальные KYC-данные?')) { clearKyc(); setS(read()); setP(progress()); }}}>
+        Очистить KYC-данные
+      </button>
+    </div>
+  );
+}

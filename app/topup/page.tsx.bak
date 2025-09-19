@@ -1,0 +1,48 @@
+'use client';
+import React, { useState } from 'react';
+import { tr } from '../../components/ui/tr';
+
+const TABS = ['IDR','RUB','USD','EUR'] as const;
+type Cur = typeof TABS[number];
+
+export default function TopUpPage(){
+  const [cur, setCur] = useState<Cur>('RUB');
+
+  return (
+    <div className="container" style={{maxWidth:480, margin:'90px auto 96px', padding:'0 16px', display:'grid', gap:12}}>
+      <section className="card" style={{display:'grid', gap:10}}>
+        <h1 style={{fontSize:18, fontWeight:800, margin:0}}>{tr('topup','title','Пополнить')}</h1>
+        <div className="seg">{TABS.map(t=><button key={t} data-active={cur===t?1:0} onClick={()=>setCur(t)}>{t}</button>)}</div>
+        <div className="field"><input placeholder={`${tr('topup','amount_in','Сумма в')} ${cur}`} inputMode="decimal" /><span className="meta">{tr('topup','currency','валюта')}</span></div>
+        <p className="meta" style={{margin:0}}>{tr('topup','demo_note','Это демо-экран. Функции пополнения — визуал без бэкенда.')}</p>
+      </section>
+
+      <section className="card" style={{display:'grid', gap:10}}>
+        <h2 style={{fontSize:16, fontWeight:800, margin:0}}>{tr('topup','methods','Способы')}</h2>
+        <Method href="/wallets" icon={<IconCard/>} title={tr('topup','card','Банковская карта')} note={tr('topup','card_note','UI-демо, без списания')} />
+        <Method href="/wallets" icon={<IconCrypto/>} title={tr('topup','crypto','Крипто-депозит')} note={tr('topup','crypto_note','Пополнение через адрес')} />
+        <Method href="/scan"    icon={<IconQR/>}    title={tr('topup','qr','QR-код')}          note={tr('topup','qr_note','Отсканировать код для оплаты')} />
+        <Method href="/promo"   icon={<IconGift/>}  title={tr('topup','gift','Подарочный код')} note={tr('topup','gift_note','Активировать промокод')} />
+        <Link href="/home" className="btn" style={{width:'100%'}}>{tr('topup','done','Готово')}</a>
+      </section>
+    </div>
+  );
+}
+
+function Method({href, icon, title, note}:{href:string; icon:React.ReactNode; title:string; note:string}){
+  return (
+    <Link href={href as any} className="linkrow" style={{textDecoration:'none'}}>
+      <span className="iconbtn" aria-hidden>{icon}</span>
+      <div style={{display:'grid'}}>
+        <strong style={{fontSize:14}}>{title}</strong>
+        <small className="meta">{note}</small>
+      </div>
+      <span style={{marginLeft:'auto', opacity:.6}} aria-hidden>›</span>
+    </a>
+  );
+}
+
+function IconCard(){return(<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 14h4"/></svg>);}
+function IconCrypto(){return(<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l8 4.5v9L12 20 4 15.5v-9L12 2z"/><path d="M12 7v10"/></svg>);}
+function IconQR(){return(<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM16 14h2v2h-2zM18 18h2v2h-2zM14 18h2"/></svg>);}
+function IconGift(){return(<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 2c-1.5 0-3 1-3 2.5S10.5 7 12 7s3-1 3-2.5S13.5 2 12 2z"/><path d="M12 7v15"/></svg>);}

@@ -1,0 +1,108 @@
+'use client';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+type Curr = 'RUB' | 'USD' | 'IDR' | 'USDT';
+
+// ДЕМО-курсы (локальные) — используются только для внутренних вычислений
+const RATE: Record<Curr, number> = {
+  RUB: 100,      // 1 USDT = 100 ₽
+  USD: 1,        // 1 USDT = 1 $
+  IDR: 16000,    // 1 USDT = 16 000 Rp
+  USDT: 1        // 1 USDT = 1 USDT
+};
+
+export default function ExchangePage(){
+  const router = useRouter();
+  const [buyTab, setBuyTab]   = useState<Curr>('IDR'); // по умолчанию IDR
+  const [sellTab, setSellTab] = useState<Curr>('RUB');
+  const [buyAmt, setBuyAmt]   = useState<string>('');
+  const [sellAmt,setSellAmt]  = useState<string>('');
+
+  const parsed = (s:string)=>{ const n = Number(String(s).replace(',', '.')); return isFinite(n)&&n>0 ? n : 0; };
+
+  // BUY: ввод в выбранной валюте -> передаём сумму как есть (USDT посчитаем на следующем экране)
+  const buyInput  = parsed(buyAmt);
+  const goBuyMethods = ()=>{
+    const q = new URLSearchParams({ tab: buyTab, amount: String(buyInput || 0) });
+    router.push(`/exchange/buy/methods?${q.toString()}`);
+  };
+
+  // SELL: ввод в выбранной валюте -> считаем, сколько USDT нужно списать, но НЕ показываем это в UI
+  const sellInput = parsed(sellAmt); // ввод в sellTab
+  const sellUsdtRequired =
+    sellInput > 0
+      ? (sellTab === 'USDT' ? sellInput : (sellInput / RATE[sellTab]))
+      : 0;
+
+  const goSellMethods = ()=>{
+    const q = new URLSearchParams({ tab: sellTab, usdt: String(sellUsdtRequired || 0) });
+    router.push(`/exchange/sell/methods?${q.toString()}`);
+  };
+
+  return (
+    <div style={{maxWidth:480, margin:'0 auto 96px', padding:'12px 16px', display:'grid', gap:16}}>
+      {/* Назад */}
+      <button
+        type="button"
+        onClick={()=>router.back()}
+        className="btn btn-ghost"
+        style={{alignSelf:'start', width:'auto'}}
+      >‹ Назад</button>
+
+      <h1 style={{fontSize:18, fontWeight:900, margin:'0'}}>Обмен валют</h1>
+
+      {/* КУПИТЬ */}
+      <section className="ex-card">
+        <div className="ex-title">Купить</div>
+
+        <div className="ex-tabs">
+          <button className={`ex-tab ${buyTab==='RUB'?'is-active':''}`}  onClick={()=>setBuyTab('RUB')}>RUB</button>
+          <button className={`ex-tab ${buyTab==='USD'?'is-active':''}`}  onClick={()=>setBuyTab('USD')}>USD</button>
+          <button className={`ex-tab ${buyTab==='IDR'?'is-active':''}`}  onClick={()=>setBuyTab('IDR')}>IDR</button>
+          <button className={`ex-tab ${buyTab==='USDT'?'is-active':''}`} onClick={()=>setBuyTab('USDT')}>USDT</button>
+        </div>
+
+        <div className="ex-row">
+          <label className="ex-label">Сумма в {buyTab}</label>
+          <input
+            className="ex-input"
+            inputMode="decimal"
+            placeholder={`0.00 ${buyTab}`}
+            value={buyAmt}
+            onChange={e=>setBuyAmt(e.target.value)}
+          />
+        </div>
+
+        <button className="ex-cta" onClick={goBuyMethods}>Продолжить</button>
+      </section>
+
+      {/* ПРОДАТЬ */}
+      <section className="ex-card">
+        <div className="ex-title">Продать</div>
+
+        <div className="ex-tabs">
+          <button className={`ex-tab ${sellTab==='RUB'?'is-active':''}`}  onClick={()=>setSellTab('RUB')}>RUB</button>
+          <button className={`ex-tab ${sellTab==='USD'?'is-active':''}`}  onClick={()=>setSellTab('USD')}>USD</button>
+          <button className={`ex-tab ${sellTab==='IDR'?'is-active':''}`}  onClick={()=>setSellTab('IDR')}>IDR</button>
+          <button className={`ex-tab ${sellTab==='USDT'?'is-active':''}`} onClick={()=>setSellTab('USDT')}>USDT</button>
+        </div>
+
+        <div className="ex-row">
+          <label className="ex-label">Сумма в {sellTab}</label>
+          <input
+            className="ex-input"
+            inputMode="decimal"
+            placeholder={`0.00 ${sellTab}`}
+            value={sellAmt}
+            onChange={e=>setSellAmt(e.target.value)}
+          />
+        </div>
+
+        <button className="ex-cta" onClick={goSellMethods}>Продолжить</button>
+      </section>
+
+      <p className="ex-note">Демо-режим. Расчёты выполняются локально, без реальных операций.</p>
+    </div>
+  );
+}

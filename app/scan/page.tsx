@@ -1,0 +1,107 @@
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { startQrScan, type StopScan } from '../../lib/qr';
+
+type State = 'idle'|'opening'|'ready'|'stopped'|'error';
+
+export default function ScanPage(){
+  const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement|null>(null);
+  const streamRef = useRef<MediaStream|null>(null);
+  const stopScanRef = useRef<StopScan | null>(null);
+
+  const [state,setState] = useState<State>('idle');
+  const [err,setErr] = useState<string>('');
+
+  async function stopAll(){
+    // стоп распознавания
+    try{ stopScanRef.current?.(); }catch{}
+    stopScanRef.current = null;
+    // стоп потока камеры
+    try{
+      const s = streamRef.current;
+      if (s) s.getTracks().forEach(t=>{ try{ t.stop(); }catch{} });
+    } finally {
+      streamRef.current = null;
+      if (videoRef.current) (videoRef.current as any).srcObject = null;
+      setState('stopped');
+    }
+  }
+
+  async function openCam(){
+    setErr(''); setState('opening');
+    const constraints: MediaStreamConstraints = { video: { facingMode: { ideal:'environment' } }, audio: false };
+    try{
+      await stopAll();
+      const s = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = s;
+      if(videoRef.current){
+        (videoRef.current as any).srcObject = s;
+        await videoRef.current.play();
+      }
+      setState('ready');
+
+      // запуск сканера (BarcodeDetector → ZXing)
+      if(videoRef.current){
+        stopScanRef.current = await startQrScan(videoRef.current, async (qrText) => {
+          // при первом результате — выключаем камеру и уходим
+          try{ await stopAll(); }finally{
+            // при желании можно роутить по содержимому
+            // try{ new URL(qrText); router.push(`/browser?u=${encodeURIComponent(qrText as any)}` as any); return; }catch{}
+            router.push('/home' as any);
+          }
+        });
+      }
+    }catch(e:any){
+      setState('error');
+      setErr(e?.name === 'NotAllowedError'
+        ? 'Доступ к камере запрещён. Разрешите доступ в настройках сайта.'
+        : 'Не удалось открыть камеру.');
+    }
+  }
+
+  const goBack = ()=>{ stopAll().finally(()=>router.back()); };
+
+  useEffect(()=>{
+    openCam();
+    const onHide = ()=> stopAll();
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+    window.addEventListener('beforeunload', onHide);
+    return ()=>{
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+      window.removeEventListener('beforeunload', onHide);
+      stopAll();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'#000', zIndex:1000, width:'100vw', height:'100dvh', overflow:'hidden' }}>
+      <video
+        ref={videoRef}
+        playsInline
+        autoPlay
+        muted
+        style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', background:'#000' }}
+      />
+      <button
+        onClick={goBack}
+        className="btn"
+        style={{ position:'absolute', top:12, left:12, zIndex:1001, background:'rgba(255,255,255,.9)' }}
+        aria-label="Назад"
+      >← Назад</button>
+
+      {err && (
+        <div className="card" style={{
+          position:'absolute', left:12, right:12, bottom:12, zIndex:1001,
+          background:'rgba(20,20,20,.7)', color:'#fff', borderColor:'rgba(255,255,255,.25)'
+        }}>
+          {err}
+        </div>
+      )}
+    </div>
+  );
+}

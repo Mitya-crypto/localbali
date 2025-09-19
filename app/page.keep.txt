@@ -1,0 +1,123 @@
+'use client';
+import Connect from "@/components/wallet/Connect";
+import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import SendTonForm from "@/components/wallet/SendTonForm";
+import SendJettonForm from "@/components/wallet/SendJettonForm";
+import QRScanner from "@/components/wallet/QRScanner";
+import RequestPayment from "@/components/wallet/RequestPayment";
+
+type Tab = 'wallet' | 'ton' | 'jetton' | 'qr' | 'aml' | 'request';
+
+export default function Home() {
+  const sp = useSearchParams();
+  const initialTab: Tab = (sp.get("asset") === "jetton" ? "jetton" : sp.get("asset") === "ton" ? "ton" : "wallet");
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  const prefillTon = useMemo(() => ({
+    to: sp.get("to") || undefined,
+    amount: sp.get("amount") || undefined,
+    comment: sp.get("comment") || undefined,
+  }), [sp]);
+
+  const prefillJet = useMemo(() => ({
+    master: sp.get("jetton") || undefined,
+    to: sp.get("to") || undefined,
+    amount: sp.get("amount") || undefined,
+    comment: sp.get("comment") || undefined,
+  }), [sp]);
+
+  return (
+    <main>
+      <div style={{ margin: '12px 0' }}><span>Connect: </span><span><Connect /></span></div>
+      <h1 style={{marginTop:8}}>CRYPTOBALI Ocean</h1>
+      <div className="tabs">
+        <button className={`tabbtn ${tab==='wallet'?'active':''}`} onClick={()=>setTab('wallet')}>Кошелёк</button>
+        <button className={`tabbtn ${tab==='ton'?'active':''}`} onClick={()=>setTab('ton')}>TON</button>
+        <button className={`tabbtn ${tab==='jetton'?'active':''}`} onClick={()=>setTab('jetton')}>Jetton</button>
+        <button className={`tabbtn ${tab==='request'?'active':''}`} onClick={()=>setTab('request')}>Запрос</button>
+        <button className={`tabbtn ${tab==='qr'?'active':''}`} onClick={()=>setTab('qr')}>QR-сканер</button>
+        <button className={`tabbtn ${tab==='aml'?'active':''}`} onClick={()=>setTab('aml')}>AML</button>
+      </div>
+
+      {tab === 'wallet' && (
+        <div className="grid">
+          <div className="card">
+            <strong>Баланс (демо)</strong>
+            <div className="row" style={{marginTop:8, gap:24}}>
+              <div><div className="muted">TON</div><div style={{fontSize:28,fontWeight:800}}>—</div></div>
+              <div><div className="muted">USDT</div><div style={{fontSize:28,fontWeight:800}}>—</div></div>
+              <div><div className="muted">JET</div><div style={{fontSize:28,fontWeight:800}}>—</div></div>
+            </div>
+            <div className="muted" style={{marginTop:8}}>Подключи кошелёк на вкладке TON/Jetton и мы подгрузим баланс.</div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'ton' && <SendTonForm prefill={prefillTon} />}
+      {tab === 'jetton' && <SendJettonForm prefill={prefillJet} />}
+      {tab === 'request' && <RequestPayment />}
+
+      {tab === 'qr' && (
+        <QRScanner onParsed={(d)=>{
+          if (d.asset === 'ton') {
+            const u = new URL(window.location.href);
+            u.searchParams.set('asset', 'ton');
+            if (d.to) u.searchParams.set('to', d.to); else u.searchParams.delete('to');
+            if (d.amount) u.searchParams.set('amount', d.amount); else u.searchParams.delete('amount');
+            if (d.comment) u.searchParams.set('comment', d.comment); else u.searchParams.delete('comment');
+            window.location.href = u.toString();
+          } else {
+            const u = new URL(window.location.href);
+            u.searchParams.set('asset', 'jetton');
+            if (d.master) u.searchParams.set('jetton', d.master); else u.searchParams.delete('jetton');
+            if (d.to) u.searchParams.set('to', d.to); else u.searchParams.delete('to');
+            if (d.amount) u.searchParams.set('amount', d.amount); else u.searchParams.delete('amount');
+            if (d.comment) u.searchParams.set('comment', d.comment); else u.searchParams.delete('comment');
+            window.location.href = u.toString();
+          }
+        }} />
+      )}
+
+      {tab === 'aml' && <AmlCard />}
+    </main>
+  );
+}
+
+function AmlCard() {
+  const [address, setAddress] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [res, setRes] = useState<any>(null);
+
+  async function check() {
+    if (!address) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/aml?address=${encodeURIComponent(address)}`);
+      const j = await r.json();
+      setRes(j);
+    } finally { setLoading(false); }
+  }
+
+  const badge = res?.risk ? <span className={`pill ${res.risk}`}>{res.risk === 'low' ? 'Низкий' : res.risk === 'medium' ? 'Средний' : 'Высокий'} риск</span> : null;
+
+  return (
+    <div className="card grid" style={{gap:12}}>
+      <strong>Проверка AML</strong>
+      <div className="grid cols2">
+        <div><label>Адрес</label><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="EQ..." /></div>
+        <div className="row" style={{alignItems:'flex-end'}}>
+          <button className="btn" onClick={check} disabled={loading}>{loading ? 'Проверяем...' : 'Проверить'}</button>
+          {badge}
+        </div>
+      </div>
+      {res && (
+        <div>
+          <div className="muted">Провайдер: {res.provider}</div>
+          <ul>{(res.reasons||[]).map((r:string,i:number)=><li key={i} className="muted">• {r}</li>)}</ul>
+        </div>
+      )}
+      <div className="muted">Провайдер выбирается переменной окружения <code>AML_PROVIDER</code>. Реальные ключи/эндпоинты — в .env.</div>
+    </div>
+  );
+}

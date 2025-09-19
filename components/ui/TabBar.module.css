@@ -1,0 +1,10 @@
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(255,255,255,.95);border-top:1px solid rgba(0,0,0,.08);backdrop-filter:saturate(180%) blur(10px);}
+.row{height:62px;padding:0 12px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:center;justify-items:center;user-select:none;}
+.btn{display:inline-flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;min-width:0;}
+.label{font-size:11px;line-height:1;color:#6b7280;}
+.labelActive{color:#0284c7;font-weight:600;}
+.iconImg{width:22px;height:22px;display:block;}
+.bigImg{width:30px;height:30px;display:block;}
+.slot{position:relative;width:100%;height:100%;}
+.bigBtn{position:absolute;left:50%;top:0;transform:translate(-50%,-20px);width:56px;height:56px;border-radius:16px;border:1px solid #fff;background:#0284c7;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(2,132,199,.35);}
+.safe{height:calc(env(safe-area-inset-bottom));}

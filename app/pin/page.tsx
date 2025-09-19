@@ -1,0 +1,34 @@
+'use client';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+export default function PinPage(){
+  const [pin,setPin]=useState('');
+  const router=useRouter();
+
+  useEffect(()=>{ if(pin.length===4){ setTimeout(()=>router.push('/home' as any),200); } },[pin,router]);
+
+  const press=(v:string)=>{
+    if(v==='back'){ setPin(p=>p.slice(0,-1)); return; }
+    if(v==='clear'){ setPin(''); return; }
+    if(pin.length<4) setPin(pin+v);
+  };
+
+  return (
+    <div style={{maxWidth:420, margin:'32px auto'}}>
+      <div style={{textAlign:'center',margin:'24px 0 8px',fontSize:22,fontWeight:700}}>Введите PIN-код</div>
+      <div className="dotRow">{[0,1,2,3].map(i=> <div key={i} className={`dot ${pin.length>i?'on':''}`}/>)}</div>
+      <div className="keypad">
+        {['1','2','3','4','5','6','7','8','9','back','0','clear'].map((k,i)=>(
+          <button key={i} className={`key${k==='0'?' big':''}`} onClick={()=>press(k)}>
+            {k==='back'?'←':k==='clear'?'✕':k}
+          </button>
+        ))}
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',marginTop:12}}>
+        <a href="/profile" className="muted">Выйти</a>
+        <span className="muted">{pin.length}/4</span>
+      </div>
+    </div>
+  );
+}
