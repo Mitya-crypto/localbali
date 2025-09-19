@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import React from 'react';
 
 export type Tile = {
@@ -30,5 +31,5 @@ function Tile({href,label,icon,badge,ok,disabled}:Tile){
       {disabled && <span className="tile-soon">Soon</span>}
     </div>
   );
-  return disabled ? <div className="tile-wrap">{body}</div> : <Link className="tile-wrap" href={href}>{body}</a>;
+  return disabled ? <div className="tile-wrap">{body}</div> : <Link className="tile-wrap" href={href as any}>{body}</Link>;
 }

@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 const Fallback = () => (
@@ -17,7 +18,7 @@ const Portfolio = dynamic(async () => {
 export default function PortfolioPage(){
   return (
     <div className="vstack" style={{gap:16}}>
-      <div className="topbar"><Link href="/invest">← Инвестиции</a></div>
+      <div className="topbar"><Link href="/invest">← Инвестиции</Link></div>
       <Portfolio />
     </div>
   );

@@ -1,11 +1,13 @@
 'use client';
 import React, { useMemo, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
 type Curr = 'RUB'|'USD'|'IDR'|'USDT';
 const RATE: Record<Curr, number> = { RUB:100, USD:1, IDR:16000, USDT:1 };
 
-export default function BuyCashPage(){
+function BuyCashPageInner(){
   const sp = useSearchParams();
   const router = useRouter();
   const from = (sp.get('from') as Curr) || 'IDR';
@@ -86,5 +88,14 @@ function Section({title, children}:{title:string; children:React.ReactNode}){
       <strong>{title}</strong>
       <div style={{marginTop:8}}>{children}</div>
     </section>
+  );
+}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <BuyCashPageInner />
+    </Suspense>
   );
 }

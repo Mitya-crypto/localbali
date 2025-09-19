@@ -1,11 +1,13 @@
 'use client';
 import React from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
 type Curr = 'RUB' | 'USD' | 'IDR' | 'USDT';
 const RATE: Record<Curr, number> = { RUB:100, USD:1, IDR:16000, USDT:1 };
 
-export default function BuyMethods(){
+function BuyMethodsInner(){
   const sp = useSearchParams();
   const router = useRouter();
 
@@ -108,5 +110,14 @@ export default function BuyMethods(){
         Назад
       </button>
     </div>
+  );
+}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <BuyMethodsInner />
+    </Suspense>
   );
 }

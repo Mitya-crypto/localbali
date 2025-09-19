@@ -1,11 +1,13 @@
 'use client';
 import React from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
 type Curr = 'RUB' | 'USD' | 'IDR' | 'USDT';
 const RATE: Record<Curr, number> = { RUB:100, USD:1, IDR:16000, USDT:1 };
 
-export default function SellMethods(){
+function SellMethodsInner(){
   const sp = useSearchParams();
   const router = useRouter();
 
@@ -91,5 +93,14 @@ export default function SellMethods(){
 
       <button type="button" onClick={()=>router.back()} style={{width:'100%', background:'#2d6cf6', color:'#fff', border:'none', borderRadius:14, padding:'12px 16px', fontWeight:900}}>Назад</button>
     </div>
+  );
+}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <SellMethodsInner />
+    </Suspense>
   );
 }

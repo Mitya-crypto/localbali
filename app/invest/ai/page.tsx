@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 // Попробуем подцепить твой реальный компонент, иначе покажем аккуратную заглушку
@@ -18,7 +19,7 @@ const Advisor = dynamic(async () => {
 export default function InvestAIPage(){
   return (
     <div className="vstack" style={{gap:16}}>
-      <div className="topbar"><Link href="/invest">← Инвестиции</a></div>
+      <div className="topbar"><Link href="/invest">← Инвестиции</Link></div>
       <Advisor />
     </div>
   );

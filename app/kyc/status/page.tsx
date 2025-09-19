@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { read, clearKyc, progress } from '../../../lib/kyc';
 
@@ -15,7 +16,7 @@ export default function KycStatus(){
 
   return (
     <div className="container" style={{ padding:16, display:'grid', gap:12 }}>
-      <a href="/kyc" className="linkrow">← Назад</a>
+      <Link href="/kyc" className="linkrow">← Назад</Link>
       <h1 style={{ fontSize:20, fontWeight:700 }}>Хранилище KYC (локально)</h1>
 
       <div className="card">

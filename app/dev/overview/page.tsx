@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 type Arch = { routes: string[]; apis: string[]; tree: string; mermaid: string; };
@@ -73,9 +74,9 @@ export default function DevOverview() {
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {data.routes.map(r => (
-              <a key={r} href={r} style={{ padding: '6px 10px', border: '1px solid #ddd', borderRadius: 8, textDecoration: 'none', color: '#111' }}>
+              <Link key={r} href={r as any} style={{ padding: '6px 10px', border: '1px solid #ddd', borderRadius: 8, textDecoration: 'none', color: '#111' }}>
                 {r}
-              </a>
+              </Link>
             ))}
           </div>
         )}
@@ -112,9 +113,9 @@ export default function DevOverview() {
       </section>
 
       <section style={{ border: '1px solid #eee', borderRadius: 12, padding: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <a href="/verify" style={{ padding: '6px 10px', border: '1px solid #ddd', borderRadius: 8 }}>→ /verify</a>
-        <a href="/pin" style={{ padding: '6px 10px', border: '1px solid #ddd', borderRadius: 8 }}>→ /pin</a>
-        <a href="/home" style={{ padding: '6px 10px', border: '1px solid #ddd', borderRadius: 8 }}>→ /home</a>
+        <Link href="/verify" style={{ padding: '6px 10px', border: '1px solid #ddd', borderRadius: 8 }}>→ /verify</Link>
+        <Link href="/pin" style={{ padding: '6px 10px', border: '1px solid #ddd', borderRadius: 8 }}>→ /pin</Link>
+        <Link href="/home" style={{ padding: '6px 10px', border: '1px solid #ddd', borderRadius: 8 }}>→ /home</Link>
         <button onClick={() => { localStorage.removeItem('pinHash'); sessionStorage.clear(); alert('PIN/session cleared'); }} style={{ padding: '6px 10px', border: '1px solid #fca5a5', borderRadius: 8, background: '#fff0f0' }}>Clear PIN/session</button>
       </section>
     </div>

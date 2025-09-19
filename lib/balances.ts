@@ -1,3 +1,10 @@
+/* build stub: minimal wallet record */
+export type WalletRecord = {
+  kind?: 'evm' | 'tron' | 'ton' | string;
+  address?: string;
+  chainId?: number;
+};
+
 
 // === EVM balances ===
 export async function fetchEvmBalance(address: string, chainId: number): Promise<{eth:number; usdt:number}> {

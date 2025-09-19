@@ -1,11 +1,13 @@
 'use client';
 import React, { useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
 const ADDR_ERC20 = '0xDEMO9dF13aA7cE0bF7e1E9A1bCDeF12345678901';
 const ADDR_TRC20 = 'TRDEMO9fF5cZbR9FQh4o7iH1uB2wK3m4n5p6q7r8';
 
-export default function BuyUsdtPage(){
+function BuyUsdtPageInner(){
   const sp = useSearchParams();
   const router = useRouter();
   const usdt = Number(sp.get('usdt') || '0');
@@ -58,5 +60,14 @@ export default function BuyUsdtPage(){
         style={{width:'100%', background:'#2d6cf6', color:'#fff', border:'none', borderRadius:14, padding:'12px 16px', fontWeight:900, marginTop:6}}
       >Назад</button>
     </div>
+  );
+}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <BuyUsdtPageInner />
+    </Suspense>
   );
 }

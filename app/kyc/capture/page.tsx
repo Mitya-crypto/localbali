@@ -1,13 +1,14 @@
 'use client';
-
+import { Suspense } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { saveImage } from '../../../lib/kyc';
+export const dynamic = 'force-dynamic';
 
 type KycDocType = 'passport'|'id'|'driver';
 type Field = 'photo'|'front'|'back'|'selfie';
 
-export default function KycCapture(){
+function KycCaptureInner(){
   const sp = useSearchParams();
   const router = useRouter();
 
@@ -150,5 +151,14 @@ function FrameOverlay({ selfie, ratio }:{ selfie:boolean; ratio:number }){
       
       <div style={tip}>{selfie ? 'Держите документ рядом с лицом' : 'Разместите документ внутри рамки'}</div>
     </div>
+  );
+}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <KycCaptureInner />
+    </Suspense>
   );
 }

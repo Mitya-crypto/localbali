@@ -1,7 +1,9 @@
 // @ts-nocheck
 'use client';
 import React, {useEffect, useMemo, useState} from 'react';
+import { Suspense } from 'react';
 import {useSearchParams} from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
 declare global {
   interface Window { tronLink?: any; tronWeb?: any; Telegram?: any; }
@@ -10,7 +12,7 @@ declare global {
 type Item = { key: string; value: any; ok?: boolean; warn?: boolean; err?: boolean };
 const kv = (key: string, value: any, flags: Partial<Item> = {}): Item => ({ key, value, ...flags });
 
-export default function TronlinkScanPage() {
+function TronlinkPageInner() {
   const sp = useSearchParams();
   const [items, setItems] = useState<Item[]>([]);
   const [addr, setAddr] = useState<string | null>(null);
@@ -175,5 +177,23 @@ export default function TronlinkScanPage() {
         <div className="text-gray-500 text-xs">Подсказка: можно открыть страницу с авто-запуском — <code>?autorun=1</code></div>
       </div>
     </div>
+  );
+}
+
+
+function PageInner(){
+  return (
+    <Suspense fallback={<div />}> 
+      <TronlinkPageInner />
+    </Suspense>
+  );
+}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <PageInner />
+    </Suspense>
   );
 }

@@ -1,11 +1,13 @@
 'use client';
 import React, { useMemo, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
 type Curr = 'RUB'|'USD'|'IDR'|'USDT';
 const RATE: Record<Curr, number> = { RUB:100, USD:1, IDR:16000, USDT:1 };
 
-export default function BuyUsdPage(){
+function BuyUsdPageInner(){
   const sp = useSearchParams();
   const router = useRouter();
   const from = (sp.get('from') as Curr) || 'USD';
@@ -95,5 +97,14 @@ function InstructionBuy({kind, usd}:{kind:'zelle'|'msk'|'bali'; usd:number}){
         <li>Сумма к оплате: <b>{usd ? usd.toFixed(2) : '—'} USD</b>.</li>
       </ul>
     </section>
+  );
+}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <BuyUsdPageInner />
+    </Suspense>
   );
 }

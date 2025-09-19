@@ -1,8 +1,10 @@
 'use client';
 import React, { useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
-export default function SellUsdPage(){
+function SellUsdPageInner(){
   const sp = useSearchParams();
   const router = useRouter();
   const usd = Number(sp.get('usdt') || '0'); // 1 USDT = 1 USD (демо)
@@ -81,5 +83,14 @@ function Tile({title, subtitle, mark, onClick}:{title:string; subtitle:string; m
       </span>
       <span style={{marginLeft:'auto', opacity:.7}}>›</span>
     </button>
+  );
+}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <SellUsdPageInner />
+    </Suspense>
   );
 }

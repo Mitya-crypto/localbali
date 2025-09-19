@@ -101,7 +101,7 @@ export default function HomePage(){
 
 function Action({href, icon, label, dot}:{href:string; icon:React.ReactNode; label:string; dot?:boolean}){
   return (
-    <Link href={href} className="action">
+    <Link href={href as any} className="action">
       <div className="qtile">{dot && <span className="dot" />}<span aria-hidden>{icon}</span></div>
       <div className="qtitle">{label}</div>
     </Link>

@@ -1,12 +1,14 @@
 'use client';
 import React, { useMemo, useState } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
 type Curr = 'RUB' | 'USD' | 'IDR' | 'USDT';
 type BankKey = 'sber'|'tinkoff'|'alfa'|'ozon'|'sbp';
 const RATE: Record<Curr, number> = { RUB:100, USD:1, IDR:16000, USDT:1 };
 
-export default function SellRubPage(){
+function SellRubPageInner(){
   const sp = useSearchParams();
   const router = useRouter();
 
@@ -108,3 +110,12 @@ function LogoTinkoff(){return(<svg width="26" height="26" viewBox="0 0 24 24"><r
 function LogoAlfa(){return(<svg width="26" height="26" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" fill="#E31E24"/><path d="M8 16h8M9 16l3.5-9L16 16" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>);}
 function LogoOzon(){return(<svg width="26" height="26" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" fill="#005BFF"/><circle cx="12" cy="12" r="4.5" fill="#fff"/><path d="M6 12h4M14 12h4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>);}
 function LogoSBP(){return(<svg width="26" height="26" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" fill="#F1F5F9"/><path d="M6 12l4-4v8l4-4" fill="#7C3AED"/><path d="M10 8l8 4-8 4" fill="#22C55E" opacity=".9"/></svg>);}
+
+
+export default function Page(){
+  return (
+    <Suspense fallback={<div />}> 
+      <SellRubPageInner />
+    </Suspense>
+  );
+}

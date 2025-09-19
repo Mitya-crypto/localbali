@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -55,7 +56,7 @@ export default function EmailPage(){
 
   return (
     <div className="vstack" style={{gap:16}}>
-      <div className="topbar"><Link href="/profile">← Профиль</a></div>
+      <div className="topbar"><Link href="/profile">← Профиль</Link></div>
 
       <div className="card vstack" style={{gap:12}}>
         <label htmlFor="email"><b>E-mail</b></label>
