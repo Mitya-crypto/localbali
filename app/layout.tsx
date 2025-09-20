@@ -1,7 +1,7 @@
 // @ts-nocheck
 import './globals.css';
 import Providers from './providers';
-import React from 'react';
+import React, { Suspense } from 'react';
 import TabBar from '../components/ui/TabBar';
 import { Web3Provider } from '../components/providers/Web3';
 
@@ -23,7 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Providers>
         </Web3Provider>
 
-        <TabBar />
+        <Suspense fallback={null}>
+          <TabBar />
+        </Suspense>
       </body>
     </html>
   );
