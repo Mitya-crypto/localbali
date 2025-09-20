@@ -1,5 +1,6 @@
 // @ts-nocheck
 'use client';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import s from './TabBar.module.css';
 import React from 'react';
@@ -35,7 +36,18 @@ const scanSvgStrokeWhite = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/20
   </g></svg>`;
 
 function IconImg({src, alt, big=false}:{src:string;alt:string;big?:boolean}) {
-  return <img src={src} alt={alt} className={big ? s.bigImg : s.iconImg} draggable={false} />;
+  const size = big ? 30 : 22;
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={size}
+      height={size}
+      className={big ? s.bigImg : s.iconImg}
+      draggable={false}
+      unoptimized
+    />
+  );
 }
 
 export default function TabBar() {
