@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { tr } from '../../../components/ui/tr';
+import { fetchEmailStatus, getEmail, subscribeEmailStatus } from '../../../lib/email-util';
 
 export default function SecurityPage(){
   const [email,setEmail] = useState<string|undefined>();
@@ -8,12 +9,21 @@ export default function SecurityPage(){
   const [pin,setPin] = useState(false);
   const [hide,setHide] = useState(false);
 
-  useEffect(()=>{ try{
-    setEmail(localStorage.getItem('userEmail')||undefined);
-    setVerified(localStorage.getItem('userEmailVerified')==='1');
-    setPin(localStorage.getItem('pin_enabled')==='1');
-    setHide(localStorage.getItem('hideBalance')==='1');
-  }catch{} },[]);
+  useEffect(()=>{
+    try{
+      const status = getEmail();
+      setEmail(status.email);
+      setVerified(status.verified);
+      setPin(localStorage.getItem('pin_enabled')==='1');
+      setHide(localStorage.getItem('hideBalance')==='1');
+    }catch{}
+    fetchEmailStatus().catch(()=>{});
+    const off = subscribeEmailStatus((next)=>{
+      setEmail(next.email);
+      setVerified(next.verified);
+    });
+    return ()=>off();
+  },[]);
 
   const toggle = (key:string, setter: React.Dispatch<React.SetStateAction<boolean>>)=>()=>{
     setter(v=>{ const n=!v; try{ localStorage.setItem(key, n?'1':'0'); }catch{}; return n; });

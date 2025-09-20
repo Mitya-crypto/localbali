@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { tr } from '../../components/ui/tr';
+import { fetchEmailStatus, getEmail, subscribeEmailStatus } from '../../lib/email-util';
 
 export default function ProfilePage(){
   const [username, setUsername] = useState('@user');
@@ -14,16 +15,16 @@ export default function ProfilePage(){
     try{
       const u = localStorage.getItem('username') || '@user';
       setUsername(u.startsWith('@') ? u : '@'+u);
-      const m = localStorage.getItem('userEmail') || undefined;
-      setEmail(m);
-      setVerified(localStorage.getItem('userEmailVerified')==='1');
+      const status = getEmail();
+      setEmail(status.email);
+      setVerified(status.verified);
       const L = (localStorage.getItem('lang')||'ru').toLowerCase();
       setLangLabel(L==='en'?'English':L==='id'?'Bahasa Indonesia':'Русский');
       const rawDev = localStorage.getItem('devices_v1');
       if (rawDev){ try{ const arr = JSON.parse(rawDev); setDevicesCount(Array.isArray(arr)?arr.length:0); }catch{} }
       const rawWal = localStorage.getItem('wallets.v1');
-      if (rawWal && m){ try{
-        const data = JSON.parse(rawWal); const byUser = data?.[m];
+      if (rawWal && status.email){ try{
+        const data = JSON.parse(rawWal); const byUser = data?.[status.email];
         let cnt = 0; if (Array.isArray(byUser)) cnt = byUser.length;
         else if (byUser && typeof byUser === 'object') {
           const vals: unknown[] = Object.values(byUser as Record<string, unknown>);
@@ -32,6 +33,30 @@ export default function ProfilePage(){
         setWalletsCount(cnt||0);
       }catch{} }
     }catch{}
+    fetchEmailStatus().catch(()=>{});
+    const off = subscribeEmailStatus((next)=>{
+      setEmail(next.email);
+      setVerified(next.verified);
+      if(next.email){
+        try{
+          const rawWal = localStorage.getItem('wallets.v1');
+          if(rawWal){
+            const data = JSON.parse(rawWal);
+            const byUser = data?.[next.email];
+            let cnt = 0;
+            if(Array.isArray(byUser)) cnt = byUser.length;
+            else if(byUser && typeof byUser === 'object'){
+              const vals: unknown[] = Object.values(byUser as Record<string, unknown>);
+              cnt = vals.reduce((acc: number, v: unknown)=> acc + (Array.isArray(v)?v.length:1), 0);
+            }
+            setWalletsCount(cnt||0);
+          }
+        }catch{}
+      }else{
+        setWalletsCount(0);
+      }
+    });
+    return ()=>off();
   },[]);
 
   const logout = (e:React.MouseEvent)=>{ e.preventDefault(); try{ localStorage.removeItem('userEmail'); localStorage.removeItem('userEmailVerified'); localStorage.setItem('pin_enabled','0'); }catch{}; window.location.href='/home'; };
