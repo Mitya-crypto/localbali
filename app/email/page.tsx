@@ -4,13 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   validateEmailFormat, suggestDomainFor, isDisposableDomain,
-  startVerification, verifyCode, getEmail, splitEmail
+  startVerification, verifyCode, getEmail, splitEmail, clearVerificationSession
 } from '../../lib/email-util';
 
 export default function EmailPage(){
   const router = useRouter();
-  const [{email, sent, demoCode, error, info, code}, set] = useState({
-    email:'', sent:false, demoCode:'', error:'', info:'', code:''
+  const [{email, sent, sending, error, info, code}, set] = useState({
+    email:'', sent:false, sending:false, error:'', info:'', code:''
   });
 
   useEffect(()=>{
@@ -27,17 +27,41 @@ export default function EmailPage(){
     return domain ? isDisposableDomain(domain) : false;
   }, [email]);
 
-  const onSend = ()=>{
+  const sendCode = async ()=>{
     const e = email.trim();
     if(!validateEmailFormat(e)){
       set(s=>({...s, error:'Введите корректный e-mail', info:''}));
       return;
     }
-    const {code} = startVerification(e, 600);
-    set(s=>({...s, sent:true, demoCode:code, error:'', info:'Код отправлен (демо). Введите 6 цифр ниже.'}));
+
+    set(s=>({...s, sending:true, error:'', info:''}));
+    const { code: generated } = startVerification(e, 600);
+
+    try {
+      const locale = typeof navigator !== 'undefined' ? navigator.language : undefined;
+      const res = await fetch('/api/email/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: e, code: generated, locale }),
+      });
+
+      if(!res.ok){
+        const data = await res.json().catch(()=>null);
+        throw new Error(data?.error || 'Не удалось отправить код. Попробуйте позже.');
+      }
+
+      set(s=>({...s, sent:true, sending:false, code:'', error:'', info:'Код отправлен. Проверьте почту (включая спам).'}));
+    } catch (err: unknown) {
+      clearVerificationSession();
+      const message = err instanceof Error ? err.message : 'Не удалось отправить код. Попробуйте позже.';
+      set(s=>({...s, sent:false, sending:false, info:'', error: message }));
+    }
   };
 
+  const onSend = ()=>{ void sendCode(); };
+
   const onVerify = ()=>{
+    set(s=>({...s, error:'', info:''}));
     const res = verifyCode(code);
     if(!res.ok){
       const map: Record<string,string> = {
@@ -52,7 +76,7 @@ export default function EmailPage(){
     router.push('/profile' as any);
   };
 
-  const onResend = ()=> onSend();
+  const onResend = ()=>{ void sendCode(); };
 
   return (
     <div className="vstack" style={{gap:16}}>
@@ -96,7 +120,9 @@ export default function EmailPage(){
         )}
 
         {!sent ? (
-          <button className="btn primary" onClick={onSend}>Отправить код</button>
+          <button className="btn primary" onClick={onSend} disabled={sending}>
+            {sending ? 'Отправляем…' : 'Отправить код'}
+          </button>
         ) : (
           <div className="vstack" style={{gap:8}}>
             <label htmlFor="code"><b>Код из письма</b></label>
@@ -107,11 +133,12 @@ export default function EmailPage(){
                       letterSpacing:'6px', textAlign:'center', fontSize:18}}
             />
             <div className="hstack" style={{justifyContent:'space-between'}}>
-              <button className="btn" onClick={onResend}>Отправить ещё раз</button>
-              <button className="btn primary" onClick={onVerify}>Подтвердить</button>
-            </div>
-            <div className="muted" style={{fontSize:12}}>
-              Для демо: код <b>{demoCode}</b> (в реальном приложении он придёт письмом).
+              <button className="btn" onClick={onResend} disabled={sending}>
+                {sending ? 'Отправляем…' : 'Отправить ещё раз'}
+              </button>
+              <button className="btn primary" onClick={onVerify} disabled={code.length !== 6}>
+                Подтвердить
+              </button>
             </div>
           </div>
         )}
@@ -121,7 +148,7 @@ export default function EmailPage(){
       </div>
 
       <div className="card muted" style={{fontSize:12}}>
-        Без бэкенда e-mail подтверждается локально. Для реальной отправки писем нужен сервер/SMTP.
+        Письмо отправляется через настроенный SMTP (см. README). Код хранится локально до подтверждения.
       </div>
     </div>
   );
