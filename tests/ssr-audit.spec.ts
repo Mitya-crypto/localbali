@@ -82,7 +82,10 @@ test.describe('SSR/Hydration audit', () => {
 
       // мягкие проверки: логируем, но не валим тест
       if (route !== '/scan' && tabbarCount === 0) {
-        test.info().annotations.push({ type: 'warn', description: '
+        const message = route === '/'
+          ? 'welcome screen intentionally hides the tab bar'
+          : 'tabbar not detected';
+        test.info().annotations.push({ type: 'warn', description: message });
       }
       if (errors.length) {
         test.info().annotations.push({ type: 'warn', description: `console errors: ${errors.length}` });
