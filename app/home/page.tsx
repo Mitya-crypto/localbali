@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import TabBar from '@/components/ui/TabBar';
-import { getUser } from '@/lib/tg';
+import { getUser, TGUser } from '@/lib/tg';
 import { useI18n } from '@/components/providers/I18nProvider';
 
 function Chip({text,bg,color}:{text:string;bg:string;color:string}) {
@@ -37,7 +37,9 @@ function AssetRow({code,fiat,amountFiat,amountCoin,disabled}:{code:'USDT'|'TON'|
 }
 
 export default function HomePage(){
-  const u = useMemo(()=>getUser(),[]);
+  const initialUser = useMemo(()=>getUser(),[]);
+  const [user, setUser] = useState<TGUser | null>(initialUser);
+  const [isUserLoading, setIsUserLoading] = useState(!initialUser?.id);
   const { t } = useI18n();
 
   // Показ/скрытие баланса — синк с localStorage('pref:hideBalance')
@@ -58,7 +60,7 @@ export default function HomePage(){
       window.removeEventListener('pref:hideBalance', on as any);
     };
   }, []);
- const toggleEye = () => {
+  const toggleEye = () => {
     const hidden = localStorage.getItem('pref:hideBalance') === '1';
     const next = hidden ? '0' : '1';
     localStorage.setItem('pref:hideBalance', next);
@@ -66,11 +68,44 @@ export default function HomePage(){
     setShow(next !== '1');
   };
 
+  useEffect(()=>{
+    if(user?.id){
+      setIsUserLoading(false);
+      return;
+    }
+    setIsUserLoading(true);
+    let mounted = true;
+    const tryUpdate = () => {
+      const next = getUser();
+      if(next?.id && mounted){
+        setUser(next);
+        setIsUserLoading(false);
+        return true;
+      }
+      return false;
+    };
+    if(tryUpdate()) return;
+    const timer = setInterval(()=>{
+      if(tryUpdate()) clearInterval(timer);
+    },500);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
+  },[user?.id]);
+
   const copyRef = async ()=>{
-    const id = (u?.id ?? 0).toString();
+    if(!user?.id){
+      alert(t('home.loadingUser')||'User data is still loading. Please try again.');
+      return;
+    }
+    const id = user.id.toString();
     const url = `${location.origin}/pin?ref=${encodeURIComponent(id)}`;
     try{ await navigator.clipboard.writeText(url); alert(t('home.invite')||'Invite'); }catch{ alert(url); }
   };
+
+  const inviteDisabled = !user?.id;
+  const inviteLabel = inviteDisabled && isUserLoading ? (t('home.loadingUser')||'Loading...') : (t('home.invite')||'Invite');
 
   return (
     <div style={{minHeight:'100svh',background:'#f5f7fb',display:'flex',flexDirection:'column',fontFamily:'system-ui'}}>
@@ -80,7 +115,7 @@ export default function HomePage(){
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             <div style={{width:42,height:42,borderRadius:999,background:'#fff'}}/>
             <div style={{display:'flex',flexDirection:'column',lineHeight:1.15}}>
-              <strong style={{fontSize:16}}>{u ? (u.username || u.first_name || 'user') : 'user'}</strong>
+              <strong style={{fontSize:16}}>{user ? (user.username || user.first_name || 'user') : 'user'}</strong>
               <span style={{fontSize:12,opacity:.9}}>mini-app</span>
             </div>
           </div>
@@ -114,8 +149,13 @@ export default function HomePage(){
             <div style={{fontWeight:800,fontSize:16}}>{t('home.promo.title')||'Up to 30% commission'}</div>
             <div style={{fontSize:13,opacity:.75}}>{t('home.promo.sub')||"from each friend's payment"}</div>
             <div style={{marginTop:14,display:'flex',gap:10,alignItems:'center'}}>
-              <button onClick={copyRef} style={{padding:'10px 16px',border:'1px solid #0ea5e9',background:'#e0f2fe',borderRadius:12,fontWeight:700}}>
-                {t('home.invite')||'Invite'}
+              <button
+                onClick={copyRef}
+                disabled={inviteDisabled}
+                style={{padding:'10px 16px',border:'1px solid #0ea5e9',background:'#e0f2fe',borderRadius:12,fontWeight:700,opacity:inviteDisabled?0.6:1,cursor:inviteDisabled?'not-allowed':'pointer'}}
+                title={inviteDisabled ? (t('home.loadingUser')||'User data is loading') : undefined}
+              >
+                {inviteLabel}
               </button>
             </div>
           </div>
