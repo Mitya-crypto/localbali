@@ -69,8 +69,13 @@ export function startVerification(email: string, ttlSeconds=600): {code:string, 
   localStorage.setItem(LS.pending, email.trim());
   localStorage.setItem(LS.code, code);
   localStorage.setItem(LS.exp, String(exp));
-  // В реале код отправили бы письмом. В демо вернём его наружу.
   return { code, exp };
+}
+
+export function clearVerificationSession(): void {
+  localStorage.removeItem(LS.pending);
+  localStorage.removeItem(LS.code);
+  localStorage.removeItem(LS.exp);
 }
 
 export function verifyCode(input: string): { ok:boolean; reason?:string } {
