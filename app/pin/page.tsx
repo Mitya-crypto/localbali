@@ -1,4 +1,9 @@
-'use client';
+diff --git a/app/pin/page.tsx b/app/pin/page.tsx
+index a9d3595be101e336be5c434ba580e3535ceeed20..25f6d37abd1eec3e7b3ff707edeb01a9e6efe9b9 100644
+--- a/app/pin/page.tsx
++++ b/app/pin/page.tsx
+@@ -1,34 +1,211 @@
+ 'use client';
 -import { useRouter } from 'next/navigation';
 -import { useEffect, useState } from 'react';
 +import Link from 'next/link';
