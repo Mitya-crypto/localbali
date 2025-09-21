@@ -1,5 +1,5 @@
 'use client';
-import {createContext, useContext, useEffect, useMemo, useState} from 'react';
+import {createContext, useCallback, useContext, useEffect, useMemo, useState} from 'react';
 
 export type Lang = 'ru'|'en'|'id'|'es'|'de';
 
@@ -21,8 +21,8 @@ export default function I18nProvider({children}:{children:React.ReactNode}) {
   useEffect(() => {
     try { const s = localStorage.getItem('lang') as Lang | null; if (s) setLang(s); } catch {}
   }, []);
-  const t = (k:string) => (DICT[lang]?.[k] ?? k);
-  const value = useMemo(()=>({lang, setLang, t}),[lang]);
+  const t = useCallback((k:string) => (DICT[lang]?.[k] ?? k), [lang]);
+  const value = useMemo(()=>({lang, setLang, t}),[lang, t]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
