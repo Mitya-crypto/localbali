@@ -5,7 +5,7 @@ import {
   getCurrentUserKey, listWalletsFor, addEvmWallet,
   addManualWallet, addTronWallet, removeWallet, type WalletRecord
 } from '../../lib/wallets';
-import { getEmail } from '../../lib/email-util';
+import { fetchEmailStatus, getEmail, subscribeEmailStatus } from '../../lib/email-util';
 import {
   isTronInjected, ensureTronInjected, connectTronLink,
   getUsdtBalance, shortTron, onTronAccountChanged
@@ -43,7 +43,15 @@ export default function WalletsPage(){
   const [tronBusy, setTronBusy] = useState(false);
   const [tronApiBusy, setTronApiBusy] = useState(false);
 
-  useEffect(()=>{ setMail(getEmail()); },[]);
+  useEffect(()=>{
+    const status = getEmail();
+    setMail({ email: status.email, verified: status.verified });
+    fetchEmailStatus().catch(()=>{});
+    const off = subscribeEmailStatus((next)=>{
+      setMail({ email: next.email, verified: next.verified });
+    });
+    return ()=>off();
+  },[]);
   useEffect(()=>{ if(userKey) setList(listWalletsFor(userKey)); },[userKey]);
 
   useEffect(()=>{

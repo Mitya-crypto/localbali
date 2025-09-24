@@ -1,3 +1,5 @@
+import { EmailStatus, type EmailStatusEventDetail } from './email-types';
+
 export function validateEmailFormat(email: string): boolean {
   const e = email.trim();
   if (!e || e.length > 254) return false;
@@ -50,47 +52,117 @@ export function suggestDomainFor(email: string): string | null {
   return best ? best.d : null;
 }
 
-function randDigits(len=6): string {
-  let s=''; for(let i=0;i<len;i++) s+=Math.floor(Math.random()*10);
-  return s;
+const EVENT = 'email-status-change';
+const STORAGE = { email: 'userEmail', verified: 'userEmailVerified' };
+const DEFAULT_STATUS: EmailStatus = { verified: false, pending: false };
+
+const g = globalThis as any;
+
+function readInitialStatus(): EmailStatus {
+  if (typeof window === 'undefined') {
+    return (g.__EMAIL_STATUS__ as EmailStatus | undefined) ?? DEFAULT_STATUS;
+  }
+  try {
+    const email = window.localStorage.getItem(STORAGE.email) || undefined;
+    const verified = window.localStorage.getItem(STORAGE.verified) === '1';
+    return { ...DEFAULT_STATUS, email, verified };
+  } catch {
+    return DEFAULT_STATUS;
+  }
 }
 
-const LS = {
-  pending: 'email.pending',
-  code: 'email.code',
-  exp: 'email.code.exp',
-  verified: 'userEmailVerified',
-  user: 'userEmail',
-};
-
-export function startVerification(email: string, ttlSeconds=600): {code:string, exp:number} {
-  const code = randDigits(6);
-  const exp = Date.now() + ttlSeconds*1000;
-  localStorage.setItem(LS.pending, email.trim());
-  localStorage.setItem(LS.code, code);
-  localStorage.setItem(LS.exp, String(exp));
-  // В реале код отправили бы письмом. В демо вернём его наружу.
-  return { code, exp };
+if (!g.__EMAIL_STATUS__) {
+  g.__EMAIL_STATUS__ = readInitialStatus();
 }
 
-export function verifyCode(input: string): { ok:boolean; reason?:string } {
-  const code = localStorage.getItem(LS.code);
-  const exp = Number(localStorage.getItem(LS.exp) || 0);
-  const pending = localStorage.getItem(LS.pending) || '';
-  if(!code || !exp || !pending) return { ok:false, reason:'no-session' };
-  if(Date.now() > exp) return { ok:false, reason:'expired' };
-  if(input.trim() !== code) return { ok:false, reason:'mismatch' };
-  // успех: переносим e-mail в «подтверждён»
-  localStorage.setItem(LS.user, pending);
-  localStorage.setItem(LS.verified, '1');
-  localStorage.removeItem(LS.pending);
-  localStorage.removeItem(LS.code);
-  localStorage.removeItem(LS.exp);
-  return { ok:true };
+let cachedStatus: EmailStatus = g.__EMAIL_STATUS__ as EmailStatus;
+
+function persistStatus(status: EmailStatus) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (status.email) window.localStorage.setItem(STORAGE.email, status.email);
+    else window.localStorage.removeItem(STORAGE.email);
+    window.localStorage.setItem(STORAGE.verified, status.verified ? '1' : '0');
+  } catch {}
 }
 
-export function getEmail(): { email?:string; verified:boolean } {
-  const email = localStorage.getItem(LS.user) || undefined;
-  const verified = localStorage.getItem(LS.verified) === '1';
-  return { email, verified };
+function emitStatus(status: EmailStatus) {
+  cachedStatus = { ...DEFAULT_STATUS, ...status };
+  g.__EMAIL_STATUS__ = cachedStatus;
+  persistStatus(cachedStatus);
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(
+        new CustomEvent<EmailStatusEventDetail>(EVENT, { detail: cachedStatus } as CustomEventInit<EmailStatusEventDetail>),
+      );
+    } catch {}
+  }
+  return cachedStatus;
+}
+
+type ApiSuccess<T extends object> = { ok: true } & T;
+type ApiError = { ok: false; error: string; message?: string; status?: EmailStatus };
+
+async function callApi<T extends object>(url: string, init?: RequestInit): Promise<ApiSuccess<T> | ApiError> {
+  try {
+    const res = await fetch(url, init);
+    const data = (await res.json().catch(() => ({}))) as any;
+    const status = data?.status as EmailStatus | undefined;
+    if (status) emitStatus(status);
+    if (!res.ok || data?.ok === false) {
+      return {
+        ok: false,
+        error: (data?.error as string) || 'server-error',
+        message: data?.message as string | undefined,
+        status,
+      };
+    }
+    return data as ApiSuccess<T>;
+  } catch (error: any) {
+    return { ok: false, error: 'network-error', message: error?.message };
+  }
+}
+
+export function getEmail(): EmailStatus {
+  return cachedStatus;
+}
+
+export function subscribeEmailStatus(fn: (status: EmailStatus) => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const handler = (event: Event) => {
+    try {
+      const detail = (event as CustomEvent<EmailStatusEventDetail>).detail;
+      if (detail) fn(detail);
+    } catch {}
+  };
+  window.addEventListener(EVENT, handler as EventListener);
+  return () => window.removeEventListener(EVENT, handler as EventListener);
+}
+
+export async function fetchEmailStatus(): Promise<ApiSuccess<{ status: EmailStatus }> | ApiError> {
+  return callApi<{ status: EmailStatus }>('/api/email/verification', { method: 'GET', cache: 'no-store' });
+}
+
+export async function startVerification(
+  email: string,
+  ttlSeconds?: number,
+): Promise<ApiSuccess<{ status: EmailStatus; delivered: boolean; skipped: boolean; message?: string }> | ApiError> {
+  return callApi<{ status: EmailStatus; delivered: boolean; skipped: boolean; message?: string }>(
+    '/api/email/verification',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, ttlSeconds }),
+    },
+  );
+}
+
+export async function verifyCode(
+  code: string,
+): Promise<ApiSuccess<{ status: EmailStatus }> | ApiError> {
+  return callApi<{ status: EmailStatus }>('/api/email/verification/confirm', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
 }
