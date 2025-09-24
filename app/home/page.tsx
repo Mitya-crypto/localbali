@@ -1,6 +1,8 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 
+import { useTelegramUser } from '@/lib/useTelegramUser';
+
 /* ===== Иконки ===== */
 function IconPlus() {
   return (
@@ -64,15 +66,22 @@ function Action({
 
 export default function HomePage() {
   const [hide, setHide] = useState(false);
-  const [user, setUser] = useState('@mityya_La');
+  const { displayName, photoUrl, initials } = useTelegramUser();
+  const [userLabel, setUserLabel] = useState(displayName);
+  const [avatarUrl, setAvatarUrl] = useState(photoUrl);
+  const [avatarInitials, setAvatarInitials] = useState(initials);
 
   useEffect(() => {
     try {
       setHide(localStorage.getItem('hideBalance') === '1');
-      const u = localStorage.getItem('username') || '@mityya_La';
-      setUser(u.startsWith('@') ? u : '@' + u);
     } catch {}
   }, []);
+
+  useEffect(() => {
+    setUserLabel((prev) => (prev === displayName ? prev : displayName));
+    setAvatarUrl((prev) => (prev === photoUrl ? prev : photoUrl));
+    setAvatarInitials((prev) => (prev === initials ? prev : initials));
+  }, [displayName, photoUrl, initials]);
 
   const toggle = () =>
     setHide((v) => {
@@ -89,7 +98,17 @@ export default function HomePage() {
       <section className="home-hero">
         <div className="hero-top">
           <div className="user-chip">
-            <div style={{ fontWeight: 800 }}>{user}</div>
+            <div className="ava" aria-hidden={avatarUrl ? undefined : true}>
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="" loading="lazy" />
+              ) : (
+                <span>{avatarInitials}</span>
+              )}
+            </div>
+            <div style={{ fontWeight: 800 }} title={userLabel}>
+              {userLabel}
+            </div>
           </div>
           <div className="badge-beta">beta ⓘ</div>
         </div>
