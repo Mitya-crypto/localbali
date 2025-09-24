@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import Link, { type LinkProps } from 'next/link';
 import { tr } from '../../components/ui/tr';
 
 export default function ProfilePage(){
@@ -95,14 +96,14 @@ export default function ProfilePage(){
   );
 }
 
-function Row({href, icon, label, value}:{href:string; icon:React.ReactNode; label:string; value?:string}){
+function Row({href, icon, label, value}:{href:LinkProps['href']; icon:React.ReactNode; label:string; value?:string}){
   return (
-    <a href={href as any} className="list-row">
+    <Link href={href} className="list-row">
       <span className="row-ico">{icon}</span>
       <span className="row-label">{label}</span>
       {value && <span className="row-value">{value}</span>}
       <span className="chev">›</span>
-    </a>
+    </Link>
   );
 }
 
