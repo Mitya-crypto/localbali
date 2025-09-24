@@ -9,8 +9,8 @@ function Section({title}:{title:string}) {
 
 export default function SecurityPage(){
   const { t } = useI18n();
-  const [pin, setPin] = useState(localStorage.getItem('pinHash') ? true : false);
-  const [hide, setHide] = useState(localStorage.getItem('hideBalance') === '1');
+  const [pin, setPin] = useState(() => (typeof window !== 'undefined' && localStorage.getItem('pinHash') ? true : false));
+  const [hide, setHide] = useState(() => (typeof window !== 'undefined' && localStorage.getItem('hideBalance') === '1'));
 
   useEffect(()=>{},[]);
 

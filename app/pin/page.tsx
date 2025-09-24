@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 async function sha256Hex(s: string) {
@@ -8,7 +8,7 @@ async function sha256Hex(s: string) {
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-export default function PinPage(){
+function PinContent(){
   const router = useRouter();
   const params = useSearchParams();
   const mode = (params.get('mode') === 'set') ? 'set' : 'check';
@@ -16,23 +16,21 @@ export default function PinPage(){
 
   useEffect(() => {
     if (pin.length !== 4) return;
-    (async () => {
-      const hash = await sha256Hex(pin);
-      const stored = localStorage.getItem('pinHash');
-      if (mode === 'set') {
-    localStorage.setItem('pinHash', hash);
-        sessionStorage.setItem('unlocked', '1');
-        router.replace('/home');
-      } else {
-        if (stored && stored === hash) {
+      (async () => {
+        const hash = await sha256Hex(pin);
+        const stored = localStorage.getItem('pinHash');
+        if (mode === 'set') {
+          localStorage.setItem('pinHash', hash);
+          sessionStorage.setItem('unlocked', '1');
+          router.replace('/home');
+        } else if (stored && stored === hash) {
           sessionStorage.setItem('unlocked', '1');
           router.replace('/home');
         } else {
           alert('Неверный PIN');
           setPin('');
         }
-      }
-    })();
+      })();
   }, [pin, mode, router]);
 
   const press = (k: string) => {
@@ -63,5 +61,13 @@ export default function PinPage(){
         ))}
       </div>
     </div>
+  );
+}
+
+export default function PinPage(){
+  return (
+    <Suspense fallback={<div style={{minHeight:'100svh', background:'var(--bg)'}}/>}>
+      <PinContent/>
+    </Suspense>
   );
 }
