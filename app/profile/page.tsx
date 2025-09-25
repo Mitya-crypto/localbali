@@ -60,7 +60,7 @@ export default function ProfilePage(){
 
       <div style={{padding:'0 14px'}}>
         <div style={{background:'#fff', border:'1px solid #eee', borderRadius:16, overflow:'hidden'}}>
-          <Row icon="👥" title={t('profile.ref')}    href="/referral" />
+          <Row icon="👥" title={t('profile.ref')}    href="/referrals" />
           <Row icon="🎁" title={t('profile.promos')} href="/promos"  />
         </div>
       </div>

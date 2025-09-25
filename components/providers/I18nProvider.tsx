@@ -1,28 +1,48 @@
 'use client';
-import {createContext, useCallback, useContext, useEffect, useMemo, useState} from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-export type Lang = 'ru'|'en'|'id'|'es'|'de';
+import { FLAGS, LANG_LABEL, translate, type Lang } from '@/lib/i18n';
 
 type Ctx = {
   lang: Lang;
-  setLang: (l:Lang)=>void;
-  t: (k:string)=>string;
+  setLang: (lang: Lang) => void;
+  t: (key: string) => string;
+  label: (lang: Lang) => string;
+  flag: (lang: Lang) => string;
 };
+
 const I18nContext = createContext<Ctx | null>(null);
 
-const DICT: Record<Lang, Record<string,string>> = {
-  en: { 'profile.title':'Profile' },
-  ru: { 'profile.title':'Профиль' },
-  id: {}, es: {}, de: {}
-};
+export default function I18nProvider({ children }: { children: React.ReactNode }) {
+  const [lang, setLangState] = useState<Lang>('en');
 
-export default function I18nProvider({children}:{children:React.ReactNode}) {
-  const [lang, setLang] = useState<Lang>('en');
   useEffect(() => {
-    try { const s = localStorage.getItem('lang') as Lang | null; if (s) setLang(s); } catch {}
+    try {
+      const saved = localStorage.getItem('lang') as Lang | null;
+      if (saved) setLangState(saved);
+    } catch {
+      // ignore localStorage access errors
+    }
   }, []);
-  const t = useCallback((k:string) => (DICT[lang]?.[k] ?? k), [lang]);
-  const value = useMemo(()=>({lang, setLang, t}),[lang, t]);
+
+  const setLang = useCallback((next: Lang) => {
+    setLangState(next);
+    try {
+      localStorage.setItem('lang', next);
+    } catch {
+      // ignore persistence failures
+    }
+  }, []);
+
+  const t = useCallback((key: string) => translate(lang, key), [lang]);
+  const label = useCallback((code: Lang) => LANG_LABEL[code], []);
+  const flag = useCallback((code: Lang) => FLAGS[code], []);
+
+  const value = useMemo(
+    () => ({ lang, setLang, t, label, flag }),
+    [flag, label, lang, setLang, t],
+  );
+
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
