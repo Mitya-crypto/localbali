@@ -9,10 +9,13 @@ function Section({title}:{title:string}) {
 
 export default function SecurityPage(){
   const { t } = useI18n();
-  const [pin, setPin] = useState(localStorage.getItem('pinHash') ? true : false);
-  const [hide, setHide] = useState(localStorage.getItem('hideBalance') === '1');
+  const [pin, setPin] = useState(false);
+  const [hide, setHide] = useState(false);
 
-  useEffect(()=>{},[]);
+  useEffect(()=>{
+    try { setPin(localStorage.getItem('pinHash') ? true : false); } catch {}
+    try { setHide(localStorage.getItem('hideBalance') === '1'); } catch {}
+  },[]);
 
   const togglePin = ()=>{
     const v = !pin; setPin(v);

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/components/providers/I18nProvider';
 
@@ -11,7 +12,7 @@ export default function TabBar({current}:{current?:'home'|'history'|'scan'|'inve
                : pathname.startsWith('/invest') ? 'invest'
                : pathname === '/scan' ? 'scan' : 'home');
 
-  const Item = ({href, label, active}:{href:string; label:string; active:boolean}) => (
+  const Item = ({href, label, active}:{href:Route; label:string; active:boolean}) => (
     <Link href={href} style={{
       flex:1, textAlign:'center', textDecoration:'none',
       color: active ? '#0b1628' : '#7e8a9d', fontWeight: active ? 700 : 600
