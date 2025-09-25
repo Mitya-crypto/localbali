@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 async function sha256Hex(s: string) {
@@ -9,6 +9,14 @@ async function sha256Hex(s: string) {
 }
 
 export default function PinPage(){
+  return (
+    <Suspense fallback={<div style={{minHeight:'100svh', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'system-ui'}}>Loading…</div>}>
+      <PinPageInner />
+    </Suspense>
+  );
+}
+
+function PinPageInner(){
   const router = useRouter();
   const params = useSearchParams();
   const mode = (params.get('mode') === 'set') ? 'set' : 'check';
@@ -20,7 +28,7 @@ export default function PinPage(){
       const hash = await sha256Hex(pin);
       const stored = localStorage.getItem('pinHash');
       if (mode === 'set') {
-    localStorage.setItem('pinHash', hash);
+        localStorage.setItem('pinHash', hash);
         sessionStorage.setItem('unlocked', '1');
         router.replace('/home');
       } else {

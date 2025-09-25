@@ -1,12 +1,13 @@
 'use client';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { useEffect, useMemo, useState } from 'react';
 import { getUser } from '@/lib/tg';
 import TabBar from '@/components/ui/TabBar';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { LANG_LABEL, type Lang } from '@/lib/i18n';
 
-function Row({icon, title, right, href}:{icon:string; title:string; right?:string; href?:string}) {
+function Row({icon, title, right, href}:{icon:string; title:string; right?:string; href?:Route}) {
   const C = (
     <div style={{
       display:'flex', alignItems:'center', gap:12, padding:'14px',
@@ -59,7 +60,7 @@ export default function ProfilePage(){
 
       <div style={{padding:'0 14px'}}>
         <div style={{background:'#fff', border:'1px solid #eee', borderRadius:16, overflow:'hidden'}}>
-          <Row icon="👥" title={t('profile.ref')}    href="/referral" />
+          <Row icon="👥" title={t('profile.ref')}    href="/referrals" />
           <Row icon="🎁" title={t('profile.promos')} href="/promos"  />
         </div>
       </div>

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Arch = { routes: string[]; apis: string[]; tree: string; mermaid: string; };
 
@@ -12,6 +12,18 @@ export default function DevOverview() {
   useEffect(() => {
     fetch('/api/dev/arch').then(r => r.json()).then(setData).catch(() => {});
   }, []);
+
+  const renderMermaid = useCallback(() => {
+    const w = window as any;
+    if (!w.mermaid || !mermaidRef.current || !data) return;
+    mermaidRef.current.innerHTML = '';
+    const pre = document.createElement('pre');
+    pre.className = 'mermaid';
+    pre.textContent = data.mermaid.replace(/^```mermaid\s*|\s*```$/g, '');
+    mermaidRef.current.appendChild(pre);
+    w.mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    w.mermaid.init(undefined, mermaidRef.current);
+  }, [data]);
 
   useEffect(() => {
     if (!data) return;
@@ -28,19 +40,7 @@ export default function DevOverview() {
     };
     run();
     return () => { cancelled = true; };
-  }, [data]);
-
-  function renderMermaid() {
-    const w = window as any;
-    if (!w.mermaid || !mermaidRef.current || !data) return;
-    mermaidRef.current.innerHTML = '';
-    const pre = document.createElement('pre');
-    pre.className = 'mermaid';
-    pre.textContent = data.mermaid.replace(/^```mermaid\s*|\s*```$/g, '');
-    mermaidRef.current.appendChild(pre);
-    w.mermaid.initialize({ startOnLoad: false, theme: 'default' });
-    w.mermaid.init(undefined, mermaidRef.current);
-  }
+  }, [data, renderMermaid]);
 
   async function callApi(url: string, method: 'GET' | 'POST') {
     try {
