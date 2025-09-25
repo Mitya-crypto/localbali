@@ -26,7 +26,7 @@ npm run dev
 
 ```bash
 # оставляем только ветку main и чистим остальные ветки локально и на origin
-scripts/consolidate-branches.sh main origin
+./scripts/consolidate-branches.sh main origin
 ```
 
 Скрипт:

@@ -54,18 +54,23 @@ if git show-ref --verify "refs/remotes/$REMOTE/$TARGET_BRANCH" >/dev/null 2>&1; 
   }
 fi
 
-for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
+mapfile -t local_branches < <(git for-each-ref --format='%(refname:short)' refs/heads/)
+for branch in "${local_branches[@]}"; do
   if [[ "$branch" != "$TARGET_BRANCH" ]]; then
     echo "Deleting local branch $branch..."
     git branch -D "$branch"
   fi
 done
 
-for ref in $(git for-each-ref --format='%(refname:short)' "refs/remotes/$REMOTE/"); do
-  remote_branch="${ref#*/}"
-  if [[ "$remote_branch" != "$TARGET_BRANCH" && "$remote_branch" != "HEAD" ]]; then
-    echo "Deleting remote branch $remote_branch from $REMOTE..."
-    git push "$REMOTE" --delete "$remote_branch"
+mapfile -t remote_branches < <(git for-each-ref --format='%(refname:lstrip=3)' "refs/remotes/$REMOTE/")
+for remote_branch in "${remote_branches[@]}"; do
+  if [[ -z "$remote_branch" || "$remote_branch" == "$TARGET_BRANCH" || "$remote_branch" == "HEAD" ]]; then
+    continue
+  fi
+
+  echo "Deleting remote branch $remote_branch from $REMOTE..."
+  if ! git push "$REMOTE" --delete "$remote_branch"; then
+    echo "Warning: failed to delete remote branch '$remote_branch'. It may be protected or already removed." >&2
   fi
 done
 
